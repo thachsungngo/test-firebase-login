@@ -13,11 +13,14 @@
     <button id="sign-out-btn" style="display: none;">Đăng xuất</button>
     <p id="user-info"></p>
 
-    <script>
-        console.log("Firebase đã khởi tạo, đang chờ xác thực...");
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Cấu hình Firebase
-         const firebaseConfig = {
+    console.log("Firebase đã khởi tạo, đang chờ xác thực...");
+
+    // Cấu hình Firebase
+    const firebaseConfig = {
             apiKey: "AIzaSyBZ_4LtXw5_sSZ4bi5NFKrnSxwDVedSWcg",
             authDomain: "membership-1c8c5.firebaseapp.com",
             projectId: "membership-1c8c5",
@@ -25,48 +28,49 @@
             messagingSenderId: "134419560626",
             appId: "1:134419560626:web:ed4d05d31e18784de7f1ab"
         };
-        firebase.initializeApp(firebaseConfig);
 
-        const auth = firebase.auth();
-        const signInBtn = document.getElementById("sign-in-btn");
-        const signOutBtn = document.getElementById("sign-out-btn");
-        const userInfo = document.getElementById("user-info");
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
-        // Kiểm tra trạng thái đăng nhập
-        auth.onAuthStateChanged(user => {
-            console.log("Trạng thái đăng nhập thay đổi:", user ? "Đã đăng nhập" : "Chưa đăng nhập");
+    const signInBtn = document.getElementById("sign-in-btn");
+    const signOutBtn = document.getElementById("sign-out-btn");
+    const userInfo = document.getElementById("user-info");
 
-            if (user) {
-                userInfo.innerHTML = `Xin chào, ${user.displayName}`;
-                signInBtn.style.display = "none";
-                signOutBtn.style.display = "block";
-            } else {
-                userInfo.innerHTML = "";
-                signInBtn.style.display = "block";
-                signOutBtn.style.display = "none";
-            }
-        });
+    // Kiểm tra trạng thái đăng nhập
+    onAuthStateChanged(auth, user => {
+        console.log("Trạng thái đăng nhập thay đổi:", user ? "Đã đăng nhập" : "Chưa đăng nhập");
 
-        // Đăng nhập
-        signInBtn.onclick = () => {
-            console.log("Đang đăng nhập...");
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-                .then(result => {
-                    console.log("Đăng nhập thành công:", result.user);
-                })
-                .catch(error => {
-                    console.error("Lỗi đăng nhập:", error);
-                });
-        };
+        if (user) {
+            userInfo.innerHTML = `Xin chào, ${user.displayName}`;
+            signInBtn.style.display = "none";
+            signOutBtn.style.display = "block";
+        } else {
+            userInfo.innerHTML = "";
+            signInBtn.style.display = "block";
+            signOutBtn.style.display = "none";
+        }
+    });
 
-        // Đăng xuất
-        signOutBtn.onclick = () => {
-            console.log("Đang đăng xuất...");
-            auth.signOut().then(() => {
-                console.log("Đăng xuất thành công");
+    // Đăng nhập
+    signInBtn.onclick = () => {
+        console.log("Đang đăng nhập...");
+        signInWithPopup(auth, provider)
+            .then(result => {
+                console.log("Đăng nhập thành công:", result.user);
+            })
+            .catch(error => {
+                console.error("Lỗi đăng nhập:", error);
             });
-        };
-    </script>
+    };
+
+    // Đăng xuất
+    signOutBtn.onclick = () => {
+        console.log("Đang đăng xuất...");
+        signOut(auth).then(() => {
+            console.log("Đăng xuất thành công");
+        });
+    };
+</script>
 </body>
 </html>
