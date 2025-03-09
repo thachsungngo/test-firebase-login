@@ -4,41 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng nhập Google với Firebase</title>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
+    <!-- Import Firebase từ CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 </head>
 <body>
     <h2>Đăng nhập bằng Google</h2>
     <button id="sign-in-btn">Đăng nhập với Google</button>
     <p id="user-info"></p>
 
-    <script>
-        // Cấu hình Firebase
-        const firebaseConfig = {
-  apiKey: "AIzaSyBZ_4LtXw5_sSZ4bi5NFKrnSxwDVedSWcg",
-  authDomain: "membership-1c8c5.firebaseapp.com",
-  projectId: "membership-1c8c5",
-  storageBucket: "membership-1c8c5.firebasestorage.app",
-  messagingSenderId: "134419560626",
-  appId: "1:134419560626:web:ed4d05d31e18784de7f1ab",
-  measurementId: "G-1WX0CNXNZ4"
-};
+    <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
-        // Khởi tạo Firebase
-        firebase.initializeApp(firebaseConfig);
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBZ_4LtXw5_sSZ4bi5NFKrnSxwDVedSWcg",
+    authDomain: "membership-1c8c5.firebaseapp.com",
+    projectId: "membership-1c8c5",
+    storageBucket: "membership-1c8c5.firebasestorage.app",
+    messagingSenderId: "134419560626",
+    appId: "1:134419560626:web:ed4d05d31e18784de7f1ab",
+    measurementId: "G-1WX0CNXNZ4"
+  };
 
-        // Đăng nhập với Google
-        document.getElementById("sign-in-btn").addEventListener("click", function () {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            firebase.auth().signInWithPopup(provider)
-                .then((result) => {
-                    const user = result.user;
-                    document.getElementById("user-info").innerHTML = `Chào, ${user.displayName}!`;
-                })
-                .catch((error) => {
-                    console.error("Lỗi đăng nhập:", error);
-                });
-        });
-    </script>
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
 </body>
 </html>
