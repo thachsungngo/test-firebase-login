@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập Google</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
+</head>
+<body>
+    <h2>Đăng nhập bằng Google</h2>
+    <button id="sign-in-btn">Đăng nhập với Google</button>
+    <p id="user-info"></p>
+
+    <script>
+        // Cấu hình Firebase (dán thông tin từ Firebase Console vào đây)
+        const firebaseConfig = {
+  apiKey: "AIzaSyBZ_4LtXw5_sSZ4bi5NFKrnSxwDVedSWcg",
+  authDomain: "membership-1c8c5.firebaseapp.com",
+  projectId: "membership-1c8c5",
+  storageBucket: "membership-1c8c5.firebasestorage.app",
+  messagingSenderId: "134419560626",
+  appId: "1:134419560626:web:ed4d05d31e18784de7f1ab",
+  measurementId: "G-1WX0CNXNZ4"
+};
+
+        // Khởi tạo Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Xử lý đăng nhập bằng Google
+        document.getElementById("sign-in-btn").addEventListener("click", function() {
+            var provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+                .then(function(result) {
+                    var user = result.user;
+                    document.getElementById("user-info").innerHTML = "Đăng nhập thành công: " + user.displayName;
+                    console.log("User:", user);
+                })
+                .catch(function(error) {
+                    console.error("Lỗi đăng nhập:", error);
+                });
+        });
+    </script>
+</body>
+</html>
