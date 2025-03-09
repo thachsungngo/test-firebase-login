@@ -3,27 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase Google Login</title>
+    <title>Ẩn hoàn toàn nội dung</title>
 </head>
 <body>
-    <h1>Đăng nhập bằng Google</h1>
+    <h1>🔐 Nội dung chỉ hiển thị sau khi đăng nhập</h1>
 
-    <!-- Hiển thị thông tin người dùng -->
-    <p id="user-info"></p>
+    <!-- 🔘 Nút đăng nhập / đăng xuất -->
+    <button id="login-btn">Đăng nhập với Google</button>
+    <button id="logout-btn" style="display: none;">Đăng xuất</button>
 
-    <!-- Nút đăng nhập -->
-    <button id="sign-in-btn">Đăng nhập với Google</button>
-
-    <!-- Nút đăng xuất -->
-    <button id="sign-out-btn" style="display: none;">Đăng xuất</button>
+    <!-- 📌 Khu vực hiển thị nội dung -->
+    <div id="hidden-content" style="display: none;">
+        <h2>🎭 Chào mừng! Đây là bài thơ bí mật:</h2>
+        <p id="poem">Đang tải...</p>
+        <h2>🖼 Hình ảnh bí mật:</h2>
+        <img id="hidden-image" src="" alt="Hình bí mật" style="display: none; max-width: 300px;">
+    </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        // ✅ Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-        console.log("Firebase đã khởi tạo, đang chờ xác thực...");
-
-        // Cấu hình Firebase (THAY BẰNG CONFIG CỦA BẠN)
+        // ✅ Cấu hình Firebase (Thay bằng config của bạn)
         const firebaseConfig = {
             apiKey: "AIzaSyBZ_4LtXw5_sSZ4bi5NFKrnSxwDVedSWcg",
             authDomain: "membership-1c8c5.firebaseapp.com",
@@ -32,51 +35,59 @@
             messagingSenderId: "134419560626",
             appId: "1:134419560626:web:ed4d05d31e18784de7f1ab"
         };
-
-        // Khởi tạo Firebase
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
+        const auth = getAuth();
+        const db = getFirestore();
 
-        // Lấy các phần tử HTML
-        const signInBtn = document.getElementById("sign-in-btn");
-        const signOutBtn = document.getElementById("sign-out-btn");
-        const userInfo = document.getElementById("user-info");
+        // ✅ Đăng nhập với Google
+        document.getElementById("login-btn").addEventListener("click", () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(error => {
+                console.error("Lỗi đăng nhập:", error);
+            });
+        });
 
-        // Theo dõi trạng thái đăng nhập
-        onAuthStateChanged(auth, user => {
-            console.log("Trạng thái đăng nhập thay đổi:", user ? "Đã đăng nhập" : "Chưa đăng nhập");
+        // ✅ Đăng xuất
+        document.getElementById("logout-btn").addEventListener("click", () => {
+            signOut(auth).then(() => {
+                alert("Bạn đã đăng xuất!");
+            });
+        });
 
+        // ✅ Kiểm tra trạng thái đăng nhập
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                userInfo.innerHTML = `Xin chào, ${user.displayName}`;
-                signInBtn.style.display = "none";
-                signOutBtn.style.display = "block";
+                document.getElementById("login-btn").style.display = "none";
+                document.getElementById("logout-btn").style.display = "block";
+                await loadHiddenContent();
             } else {
-                userInfo.innerHTML = "";
-                signInBtn.style.display = "block";
-                signOutBtn.style.display = "none";
+                document.getElementById("hidden-content").style.display = "none";
+                document.getElementById("login-btn").style.display = "block";
+                document.getElementById("logout-btn").style.display = "none";
             }
         });
 
-        // Xử lý đăng nhập
-        signInBtn.onclick = () => {
-            console.log("Đang đăng nhập...");
-            signInWithPopup(auth, provider)
-                .then(result => {
-                    console.log("Đăng nhập thành công:", result.user);
-                })
-                .catch(error => {
-                    console.error("Lỗi đăng nhập:", error);
-                });
-        };
+        // ✅ Lấy dữ liệu từ Firestore khi đăng nhập
+        async function loadHiddenContent() {
+            const docRef = doc(db, "privateContent", "hiddenPoem");
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                document.getElementById("poem").innerText = docSnap.data().content;
+                document.getElementById("hidden-content").style.display = "block";
+            } else {
+                document.getElementById("poem").innerText = "Không tìm thấy nội dung.";
+            }
 
-        // Xử lý đăng xuất
-        signOutBtn.onclick = () => {
-            console.log("Đang đăng xuất...");
-            signOut(auth).then(() => {
-                console.log("Đăng xuất thành công");
-            });
-        };
+            // 🔥 Lấy URL hình ảnh từ Firestore
+            const imgRef = doc(db, "privateContent", "hiddenImage");
+            const imgSnap = await getDoc(imgRef);
+            if (imgSnap.exists()) {
+                document.getElementById("hidden-image").src = imgSnap.data().url;
+                document.getElementById("hidden-image").style.display = "block";
+            } else {
+                console.warn("Không tìm thấy hình ảnh.");
+            }
+        }
     </script>
 </body>
 </html>
