@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập Google với Firebase</title>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <title>Đăng nhập Google</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
 </head>
 <body>
     <h2>Đăng nhập bằng Google</h2>
     <button id="sign-in-btn">Đăng nhập với Google</button>
+    <button id="sign-out-btn" style="display: none;">Đăng xuất</button>
     <p id="user-info"></p>
 
     <script>
@@ -22,22 +23,48 @@
             messagingSenderId: "134419560626",
             appId: "1:134419560626:web:ed4d05d31e18784de7f1ab"
         };
-
-        // Khởi tạo Firebase
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
 
-        // Xử lý đăng nhập Google
-        document.getElementById("sign-in-btn").addEventListener("click", function () {
+        const auth = firebase.auth();
+        const signInBtn = document.getElementById("sign-in-btn");
+        const signOutBtn = document.getElementById("sign-out-btn");
+        const userInfo = document.getElementById("user-info");
+
+        // Xử lý đăng nhập
+        signInBtn.onclick = () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider)
-                .then((result) => {
+                .then(result => {
                     const user = result.user;
-                    document.getElementById("user-info").innerHTML = `Chào, ${user.displayName}!`;
+                    userInfo.innerHTML = `Xin chào, ${user.displayName}`;
+                    signInBtn.style.display = "none";
+                    signOutBtn.style.display = "block";
                 })
-                .catch((error) => {
+                .catch(error => {
                     console.error("Lỗi đăng nhập:", error);
                 });
+        };
+
+        // Xử lý đăng xuất
+        signOutBtn.onclick = () => {
+            auth.signOut().then(() => {
+                userInfo.innerHTML = "";
+                signInBtn.style.display = "block";
+                signOutBtn.style.display = "none";
+            });
+        };
+
+        // Kiểm tra trạng thái đăng nhập khi tải trang
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                userInfo.innerHTML = `Xin chào, ${user.displayName}`;
+                signInBtn.style.display = "none";
+                signOutBtn.style.display = "block";
+            } else {
+                userInfo.innerHTML = "";
+                signInBtn.style.display = "block";
+                signOutBtn.style.display = "none";
+            }
         });
     </script>
 </body>
