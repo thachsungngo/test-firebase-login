@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase Google Login</title>
+    <title>Trang Đọc Truyện</title>
 </head>
 <body>
-    <h1>Đăng nhập bằng Google</h1>
+    <h1>Đăng nhập để xem hình ảnh</h1>
 
     <!-- Hiển thị thông tin người dùng -->
     <p id="user-info"></p>
 
-    <!-- Hiển thị ảnh đại diện -->
-    <img id="profile-pic" src="" alt="Ảnh đại diện" width="100" style="display: none; border-radius: 50%;">
+    <!-- Ảnh chỉ hiển thị khi đã đăng nhập -->
+    <img id="protected-image" src="https://storage.cloud.google.com/lhmn-bro-2025/lhmn/web/10_EN%20copy.jpg" alt="Truyện chỉ dành cho thành viên" style="display: none; width: 300px;">
 
     <!-- Nút đăng nhập -->
     <button id="sign-in-btn">Đăng nhập với Google</button>
@@ -24,7 +24,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Cấu hình Firebase
+        console.log("Firebase đã khởi tạo, đang chờ xác thực...");
+
+        // Cấu hình Firebase (THAY BẰNG CONFIG CỦA BẠN)
         const firebaseConfig = {
             apiKey: "AIzaSyBZ_4LtXw5_sSZ4bi5NFKrnSxwDVedSWcg",
             authDomain: "membership-1c8c5.firebaseapp.com",
@@ -43,48 +45,31 @@
         const signInBtn = document.getElementById("sign-in-btn");
         const signOutBtn = document.getElementById("sign-out-btn");
         const userInfo = document.getElementById("user-info");
-        const profilePic = document.getElementById("profile-pic");
+        const protectedImage = document.getElementById("protected-image");
 
-        // Cập nhật giao diện khi đăng nhập thành công
-        function updateUI(user) {
+        // Theo dõi trạng thái đăng nhập
+        onAuthStateChanged(auth, user => {
+            console.log("Trạng thái đăng nhập thay đổi:", user ? "Đã đăng nhập" : "Chưa đăng nhập");
+
             if (user) {
                 userInfo.innerHTML = `Xin chào, ${user.displayName}`;
-                profilePic.src = user.photoURL ? user.photoURL : "https://via.placeholder.com/100";
-                profilePic.style.display = "block";
                 signInBtn.style.display = "none";
                 signOutBtn.style.display = "block";
-
-                // Lưu token vào localStorage để tự động đăng nhập
-                localStorage.setItem("user", JSON.stringify(user));
+                protectedImage.style.display = "block"; // Hiển thị ảnh nếu đăng nhập
             } else {
                 userInfo.innerHTML = "";
-                profilePic.style.display = "none";
                 signInBtn.style.display = "block";
                 signOutBtn.style.display = "none";
-
-                // Xóa token khi đăng xuất
-                localStorage.removeItem("user");
+                protectedImage.style.display = "none"; // Ẩn ảnh nếu chưa đăng nhập
             }
-        }
-
-        // Kiểm tra nếu có token lưu từ trước thì tự động đăng nhập
-        window.onload = () => {
-            const savedUser = localStorage.getItem("user");
-            if (savedUser) {
-                updateUI(JSON.parse(savedUser));
-            }
-        };
-
-        // Khi Firebase thay đổi trạng thái đăng nhập
-        onAuthStateChanged(auth, user => {
-            updateUI(user);
         });
 
         // Xử lý đăng nhập
         signInBtn.onclick = () => {
+            console.log("Đang đăng nhập...");
             signInWithPopup(auth, provider)
                 .then(result => {
-                    updateUI(result.user);
+                    console.log("Đăng nhập thành công:", result.user);
                 })
                 .catch(error => {
                     console.error("Lỗi đăng nhập:", error);
@@ -93,8 +78,9 @@
 
         // Xử lý đăng xuất
         signOutBtn.onclick = () => {
+            console.log("Đang đăng xuất...");
             signOut(auth).then(() => {
-                updateUI(null);
+                console.log("Đăng xuất thành công");
             });
         };
     </script>
