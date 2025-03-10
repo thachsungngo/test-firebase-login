@@ -11,6 +11,9 @@
     <!-- Hiển thị thông tin người dùng -->
     <p id="user-info"></p>
 
+    <!-- Hiển thị ảnh đại diện -->
+    <img id="profile-pic" src="" alt="Ảnh đại diện" width="100" style="display: none; border-radius: 50%;">
+
     <!-- Nút đăng nhập -->
     <button id="sign-in-btn">Đăng nhập với Google</button>
 
@@ -21,14 +24,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        console.log("Firebase đã khởi tạo, đang chờ xác thực...");
-
-        // Cấu hình Firebase (THAY BẰNG CONFIG CỦA BẠN)
-          const firebaseConfig = {
+        // Cấu hình Firebase
+        const firebaseConfig = {
             apiKey: "AIzaSyBZ_4LtXw5_sSZ4bi5NFKrnSxwDVedSWcg",
             authDomain: "membership-1c8c5.firebaseapp.com",
             projectId: "membership-1c8c5",
-            storageBucket: "membership-1c8c5.firebasestorage.app",
+            storageBucket: "membership-1c8c5.appspot.com",
             messagingSenderId: "134419560626",
             appId: "1:134419560626:web:ed4d05d31e18784de7f1ab"
         };
@@ -42,28 +43,48 @@
         const signInBtn = document.getElementById("sign-in-btn");
         const signOutBtn = document.getElementById("sign-out-btn");
         const userInfo = document.getElementById("user-info");
+        const profilePic = document.getElementById("profile-pic");
 
-        // Theo dõi trạng thái đăng nhập
-        onAuthStateChanged(auth, user => {
-            console.log("Trạng thái đăng nhập thay đổi:", user ? "Đã đăng nhập" : "Chưa đăng nhập");
-
+        // Cập nhật giao diện khi đăng nhập thành công
+        function updateUI(user) {
             if (user) {
                 userInfo.innerHTML = `Xin chào, ${user.displayName}`;
+                profilePic.src = user.photoURL ? user.photoURL : "https://via.placeholder.com/100";
+                profilePic.style.display = "block";
                 signInBtn.style.display = "none";
                 signOutBtn.style.display = "block";
+
+                // Lưu token vào localStorage để tự động đăng nhập
+                localStorage.setItem("user", JSON.stringify(user));
             } else {
                 userInfo.innerHTML = "";
+                profilePic.style.display = "none";
                 signInBtn.style.display = "block";
                 signOutBtn.style.display = "none";
+
+                // Xóa token khi đăng xuất
+                localStorage.removeItem("user");
             }
+        }
+
+        // Kiểm tra nếu có token lưu từ trước thì tự động đăng nhập
+        window.onload = () => {
+            const savedUser = localStorage.getItem("user");
+            if (savedUser) {
+                updateUI(JSON.parse(savedUser));
+            }
+        };
+
+        // Khi Firebase thay đổi trạng thái đăng nhập
+        onAuthStateChanged(auth, user => {
+            updateUI(user);
         });
 
         // Xử lý đăng nhập
         signInBtn.onclick = () => {
-            console.log("Đang đăng nhập...");
             signInWithPopup(auth, provider)
                 .then(result => {
-                    console.log("Đăng nhập thành công:", result.user);
+                    updateUI(result.user);
                 })
                 .catch(error => {
                     console.error("Lỗi đăng nhập:", error);
@@ -72,9 +93,8 @@
 
         // Xử lý đăng xuất
         signOutBtn.onclick = () => {
-            console.log("Đang đăng xuất...");
             signOut(auth).then(() => {
-                console.log("Đăng xuất thành công");
+                updateUI(null);
             });
         };
     </script>
