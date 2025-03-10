@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase Google Login + Canvas</title>
+    <title>Trang Đọc Truyện</title>
 </head>
 <body>
-    <h1>Đăng nhập bằng Google</h1>
+    <h1>Đăng nhập để xem hình ảnh</h1>
 
     <!-- Hiển thị thông tin người dùng -->
     <p id="user-info"></p>
+
+    <!-- Ảnh chỉ hiển thị khi đã đăng nhập -->
+    <img id="protected-image" src="https://storage.cloud.google.com/lhmn-bro-2025/lhmn/web/10_EN%20copy.jpg" alt="Truyện chỉ dành cho thành viên" style="display: none; width: 300px;">
 
     <!-- Nút đăng nhập -->
     <button id="sign-in-btn">Đăng nhập với Google</button>
@@ -17,14 +20,13 @@
     <!-- Nút đăng xuất -->
     <button id="sign-out-btn" style="display: none;">Đăng xuất</button>
 
-    <!-- Vùng hiển thị ảnh -->
-    <canvas id="imageCanvas" style="border: 1px solid black; display: none;"></canvas>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Cấu hình Firebase
+        console.log("Firebase đã khởi tạo, đang chờ xác thực...");
+
+        // Cấu hình Firebase (THAY BẰNG CONFIG CỦA BẠN)
         const firebaseConfig = {
             apiKey: "AIzaSyBZ_4LtXw5_sSZ4bi5NFKrnSxwDVedSWcg",
             authDomain: "membership-1c8c5.firebaseapp.com",
@@ -43,58 +45,31 @@
         const signInBtn = document.getElementById("sign-in-btn");
         const signOutBtn = document.getElementById("sign-out-btn");
         const userInfo = document.getElementById("user-info");
-        const canvas = document.getElementById("imageCanvas");
-        const ctx = canvas.getContext("2d");
+        const protectedImage = document.getElementById("protected-image");
 
-        // Link ảnh trên Google Cloud Storage (Public URL)
-        const imageUrl = "https://storage.googleapis.com/lhmn-bro-2025/lhmn/web/10_EN%20copy.jpg";
+        // Theo dõi trạng thái đăng nhập
+        onAuthStateChanged(auth, user => {
+            console.log("Trạng thái đăng nhập thay đổi:", user ? "Đã đăng nhập" : "Chưa đăng nhập");
 
-        // Hàm tải ảnh và vẽ lên canvas
-        function loadImageToCanvas() {
-            const img = new Image();
-            img.crossOrigin = "anonymous"; // Tránh lỗi CORS
-            img.src = imageUrl;
-
-            img.onload = () => {
-                canvas.width = img.width / 2; 
-                canvas.height = img.height / 2;
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                canvas.style.display = "block"; // Hiển thị canvas
-            };
-
-            img.onerror = (err) => {
-                console.error("Lỗi tải ảnh:", err);
-            };
-        }
-
-        // Cập nhật giao diện khi đăng nhập thành công
-        function updateUI(user) {
             if (user) {
                 userInfo.innerHTML = `Xin chào, ${user.displayName}`;
                 signInBtn.style.display = "none";
                 signOutBtn.style.display = "block";
-                loadImageToCanvas(); // Hiển thị ảnh sau khi đăng nhập
+                protectedImage.style.display = "block"; // Hiển thị ảnh nếu đăng nhập
             } else {
                 userInfo.innerHTML = "";
                 signInBtn.style.display = "block";
                 signOutBtn.style.display = "none";
-
-                // Xóa canvas khi đăng xuất
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                canvas.style.display = "none"; // Ẩn canvas
+                protectedImage.style.display = "none"; // Ẩn ảnh nếu chưa đăng nhập
             }
-        }
-
-        // Kiểm tra trạng thái đăng nhập
-        onAuthStateChanged(auth, user => {
-            updateUI(user);
         });
 
         // Xử lý đăng nhập
         signInBtn.onclick = () => {
+            console.log("Đang đăng nhập...");
             signInWithPopup(auth, provider)
                 .then(result => {
-                    updateUI(result.user);
+                    console.log("Đăng nhập thành công:", result.user);
                 })
                 .catch(error => {
                     console.error("Lỗi đăng nhập:", error);
@@ -103,8 +78,9 @@
 
         // Xử lý đăng xuất
         signOutBtn.onclick = () => {
+            console.log("Đang đăng xuất...");
             signOut(auth).then(() => {
-                updateUI(null);
+                console.log("Đăng xuất thành công");
             });
         };
     </script>
