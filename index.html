@@ -12,7 +12,7 @@
 <body>
     <h1>Đăng nhập để xem hình ảnh</h1>
     <p id="user-info"></p>
-    <img id="protected-image" alt="Truyện chỉ dành cho thành viên">
+    <canvas id="protected-canvas" style="display: none;"></canvas>
     <button id="sign-in-btn">Đăng nhập với Google</button>
     <button id="sign-out-btn" style="display: none;">Đăng xuất</button>
 
@@ -39,15 +39,29 @@
         const signInBtn = document.getElementById("sign-in-btn");
         const signOutBtn = document.getElementById("sign-out-btn");
         const userInfo = document.getElementById("user-info");
-        const protectedImage = document.getElementById("protected-image");
+        const canvas = document.getElementById("protected-canvas");
+        const ctx = canvas.getContext("2d");
 
-        // Hàm lấy URL ảnh từ server (Chỉ khi đã đăng nhập)
-        function fetchImageUrl() {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve("https://storage.cloud.google.com/lhmn-bro-2025/lhmn/web/10_EN%20copy.jpg");
-                }, 500);
+        // Hàm tải ảnh dưới dạng Blob (ẨN URL)
+        async function fetchImageBlob() {
+            const response = await fetch("https://storage.googleapis.com/lhmn-bro-2025/lhmn/web/10_EN%20copy.jpg", {
+                method: "GET",
+                mode: "no-cors", // Ngăn chặn hiển thị nguồn
             });
+            return await response.blob();
+        }
+
+        // Vẽ ảnh vào Canvas (Không có URL)
+        async function displayImage() {
+            const imageBlob = await fetchImageBlob();
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                canvas.style.display = "block";
+            };
+            img.src = URL.createObjectURL(imageBlob);
         }
 
         // Theo dõi đăng nhập
@@ -56,17 +70,13 @@
                 userInfo.innerHTML = `Xin chào, ${user.displayName}`;
                 signInBtn.style.display = "none";
                 signOutBtn.style.display = "block";
-
-                // Lấy URL ảnh khi đăng nhập
-                const imageUrl = await fetchImageUrl();
-                protectedImage.src = imageUrl;
-                protectedImage.style.display = "block";
+                await displayImage();
             } else {
                 userInfo.innerHTML = "";
                 signInBtn.style.display = "block";
                 signOutBtn.style.display = "none";
-                protectedImage.style.display = "none";
-                protectedImage.src = "";
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.style.display = "none";
             }
         });
 
