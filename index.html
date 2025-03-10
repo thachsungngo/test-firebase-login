@@ -50,7 +50,7 @@
 
         // Hàm tải ảnh và vẽ lên canvas
         function loadImageToCanvas() {
-            const imageRef = ref(storage, "lhmn/web/10_EN copy.jpg"); // Cập nhật đúng đường dẫn
+            const imageRef = ref(storage, "https://storage.cloud.google.com/lhmn-bro-2025/lhmn/web/10_EN%20copy.jpg"); // Cập nhật đúng đường dẫn
 
             getDownloadURL(imageRef)
                 .then(url => {
