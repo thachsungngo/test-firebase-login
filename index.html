@@ -3,22 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang Đọc Truyện</title>
-    <style>
-        body { text-align: center; }
-        img { max-width: 100%; height: auto; display: none; }
-    </style>
+    <title>Firebase Google Login</title>
 </head>
 <body>
-    <h1>Đăng nhập để xem hình ảnh</h1>
+    <h1>Đăng nhập bằng Google</h1>
+
+    <!-- Hiển thị thông tin người dùng -->
     <p id="user-info"></p>
-    <canvas id="protected-canvas" style="display: none;"></canvas>
+
+    <!-- Hiển thị ảnh đại diện -->
+    <img id="profile-pic" src="" alt="Ảnh đại diện" width="100" style="display: none; border-radius: 50%;">
+
+    <!-- Nút đăng nhập -->
     <button id="sign-in-btn">Đăng nhập với Google</button>
+
+    <!-- Nút đăng xuất -->
     <button id="sign-out-btn" style="display: none;">Đăng xuất</button>
+
+    <!-- Canvas để hiển thị ảnh -->
+    <div id="canvas-container" style="display: none;">
+        <h3>Ảnh từ Firebase Storage</h3>
+        <canvas id="imageCanvas"></canvas>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         // Cấu hình Firebase
         const firebaseConfig = {
@@ -34,60 +45,81 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
+        const storage = getStorage(app);
 
-        // Lấy phần tử HTML
+        // Lấy các phần tử HTML
         const signInBtn = document.getElementById("sign-in-btn");
         const signOutBtn = document.getElementById("sign-out-btn");
         const userInfo = document.getElementById("user-info");
-        const canvas = document.getElementById("protected-canvas");
+        const profilePic = document.getElementById("profile-pic");
+        const canvasContainer = document.getElementById("canvas-container");
+        const canvas = document.getElementById("imageCanvas");
         const ctx = canvas.getContext("2d");
 
-        // Hàm tải ảnh dưới dạng Blob (ẨN URL)
-        async function fetchImageBlob() {
-            const response = await fetch("https://storage.googleapis.com/lhmn-bro-2025/lhmn/web/10_EN%20copy.jpg", {
-                method: "GET",
-                mode: "no-cors", // Ngăn chặn hiển thị nguồn
-            });
-            return await response.blob();
-        }
+        // Đường dẫn bí mật đến ảnh trong Firebase Storage
+        const imageRef = ref(storage, "secret-folder/hidden-image.jpg");  // Cập nhật đúng đường dẫn
 
-        // Vẽ ảnh vào Canvas (Không có URL)
-        async function displayImage() {
-            const imageBlob = await fetchImageBlob();
-            const img = new Image();
-            img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                canvas.style.display = "block";
-            };
-            img.src = URL.createObjectURL(imageBlob);
-        }
-
-        // Theo dõi đăng nhập
-        onAuthStateChanged(auth, async (user) => {
+        // Cập nhật giao diện khi đăng nhập thành công
+        function updateUI(user) {
             if (user) {
                 userInfo.innerHTML = `Xin chào, ${user.displayName}`;
+                profilePic.src = user.photoURL ? user.photoURL : "https://via.placeholder.com/100";
+                profilePic.style.display = "block";
                 signInBtn.style.display = "none";
                 signOutBtn.style.display = "block";
-                await displayImage();
+                canvasContainer.style.display = "block"; // Hiển thị canvas
+
+                // Hiển thị ảnh trong canvas
+                loadImageToCanvas();
             } else {
                 userInfo.innerHTML = "";
+                profilePic.style.display = "none";
                 signInBtn.style.display = "block";
                 signOutBtn.style.display = "none";
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                canvas.style.display = "none";
+                canvasContainer.style.display = "none"; // Ẩn canvas khi chưa đăng nhập
             }
+        }
+
+        // Tải ảnh lên canvas mà không để lộ link trực tiếp
+        function loadImageToCanvas() {
+            getDownloadURL(imageRef)
+                .then((url) => {
+                    const img = new Image();
+                    img.crossOrigin = "anonymous";
+                    img.src = url;
+
+                    img.onload = function () {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                    };
+                })
+                .catch((error) => {
+                    console.error("Lỗi khi tải ảnh:", error);
+                });
+        }
+
+        // Khi Firebase thay đổi trạng thái đăng nhập
+        onAuthStateChanged(auth, user => {
+            updateUI(user);
         });
 
-        // Đăng nhập Google
+        // Xử lý đăng nhập
         signInBtn.onclick = () => {
-            signInWithPopup(auth, provider).catch(error => console.error("Lỗi đăng nhập:", error));
+            signInWithPopup(auth, provider)
+                .then(result => {
+                    updateUI(result.user);
+                })
+                .catch(error => {
+                    console.error("Lỗi đăng nhập:", error);
+                });
         };
 
-        // Đăng xuất
+        // Xử lý đăng xuất
         signOutBtn.onclick = () => {
-            signOut(auth);
+            signOut(auth).then(() => {
+                updateUI(null);
+            });
         };
     </script>
 </body>
